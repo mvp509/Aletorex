@@ -1,0 +1,6 @@
+{
+  "name": "ALETOREX - Jeu de Cartes Solo 100% Gratuit",
+  "description": "Jeu de cartes tactique solo haut de gamme 100% gratuit, sans publicité ni achat intégré. Défiez l'IA, utilisez vos Jokers stratégiques et maîtrisez le tirage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
