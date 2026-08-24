@@ -60,6 +60,8 @@ export interface PlayerStats {
   jokersUsed: number;
   jokerWins: number;
   highestSinglePotWon: number;
+  highestSingleGain?: number;
+  highestBankBalance?: number;
   lastDailyRewardTimestamp: number;
   freeReloadsClaimed: number;
 }

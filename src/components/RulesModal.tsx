@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, BookOpen, Sparkles, Layers, Swords, Award, Radio, Zap } from 'lucide-react';
+import { X, BookOpen, Sparkles, Layers, Swords, Award, Radio, Zap, ZapOff, Flame, Dices } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface RulesModalProps {
@@ -128,33 +128,48 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            {/* 4. Variante Chaotique (Mode Stratège) */}
-            <div className="p-3.5 rounded-xl bg-gradient-to-br from-purple-950/60 via-slate-950 to-pink-950/40 border border-purple-500/50">
-              <div className="flex items-center gap-2 font-bold text-pink-300 mb-2 text-sm">
-                <Sparkles className="w-4 h-4 text-pink-400" />
-                <span>4. {t('chaoticModeTitle')}</span>
+            {/* 4. TACTICIEN : Switch Mode Zéro */}
+            <div className="p-3.5 rounded-xl bg-gradient-to-br from-cyan-950/60 via-slate-950 to-blue-950/40 border border-cyan-500/50">
+              <div className="flex items-center gap-2 font-bold text-cyan-300 mb-1.5 text-sm">
+                <ZapOff className="w-4 h-4 text-cyan-400" />
+                <span>4. ⚖️ Tacticien : {t('zeroJokerModeTitle')}</span>
               </div>
-              <p className="text-slate-300 leading-relaxed mb-2">
-                {t('chaoticRulesDesc')}
+              <p className="text-slate-300 leading-relaxed">
+                Activez l'interrupteur <strong className="text-cyan-300">{t('zeroJokerModeTitle')}</strong> pour désactiver complètement le Joker. Vous et le Tacticien disputez un duel direct à 0 Joker, basé uniquement sur le tirage pur.
               </p>
             </div>
 
-            {/* 5. Mode Spectateur & Auto-Play (Mode Offensif) */}
+            {/* 5. OFFENSIF : Switch Mode Aléatoire / Auto-Play */}
             <div className="p-3.5 rounded-xl bg-gradient-to-br from-red-950/60 via-slate-950 to-amber-950/40 border border-red-500/50">
-              <div className="flex items-center gap-2 font-bold text-red-300 mb-2 text-sm">
+              <div className="flex items-center gap-2 font-bold text-red-300 mb-1.5 text-sm">
                 <Radio className="w-4 h-4 text-red-400 animate-pulse" />
-                <span>5. {t('spectatorModeTitle')}</span>
+                <span>5. ⚔️ Offensif : {t('randomModeTitle')} ({t('spectatorModeTitle')})</span>
               </div>
-              <p className="text-slate-300 leading-relaxed mb-2">
-                {t('spectatorRulesDesc')}
+              <p className="text-slate-300 leading-relaxed">
+                Activez l'interrupteur <strong className="text-red-300">{t('randomModeTitle')}</strong> pour lancer le mode automatique / spectateur. Choisissez votre stratégie de tirage (Aléatoire 50/50, Carte Gauche ou Carte Droite).
               </p>
             </div>
 
-            {/* 6. Conseils Stratégiques */}
+            {/* 6. STRATÈGE : Switch Mode Chaotique */}
+            <div className="p-3.5 rounded-xl bg-gradient-to-br from-purple-950/60 via-slate-950 to-pink-950/40 border border-purple-500/50">
+              <div className="flex items-center gap-2 font-bold text-pink-300 mb-1.5 text-sm">
+                <Flame className="w-4 h-4 text-pink-400" />
+                <span>6. 🛡️ Stratège : {t('chaoticModeTitle')}</span>
+              </div>
+              <p className="text-slate-300 leading-relaxed mb-1.5">
+                Activez l'interrupteur <strong className="text-pink-300">{t('chaoticModeTitle')}</strong> pour affronter la mise secrète de l'adversaire dévoilée en fin de manche.
+              </p>
+              <div className="p-2.5 rounded-lg bg-slate-950 border border-purple-800/60 text-purple-200 text-xs space-y-1">
+                <div>• <strong>3 premières parties de la journée</strong> : la mise adverse secrète est comprise entre <strong>0 et 10 000 points</strong>.</div>
+                <div>• <strong>À partir de la 4ème partie (illimité)</strong> : la plage évolue sans restriction de <strong>-10 000 à +10 000 points</strong> !</div>
+              </div>
+            </div>
+
+            {/* 7. Conseils Stratégiques */}
             <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800">
               <div className="flex items-center gap-2 font-bold text-emerald-400 mb-1.5 text-sm">
                 <Swords className="w-4 h-4" />
-                <span>6. {t('rulesTips')}</span>
+                <span>7. {t('rulesTips')}</span>
               </div>
               <p className="text-slate-300 leading-relaxed">
                 {t('rulesTipsDesc')}

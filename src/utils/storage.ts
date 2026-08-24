@@ -18,6 +18,7 @@ const STORAGE_KEYS = {
   CHAOTIC_ALERT_DISMISSED_DATE: 'aletorex_chaotic_alert_dismissed_date_v1',
   AUTOPLAY_ENABLED: 'aletorex_autoplay_enabled_v1',
   AUTOPLAY_STRATEGY: 'aletorex_autoplay_strategy_v1',
+  ZERO_JOKER_MODE: 'aletorex_zero_joker_mode_v1',
   LANGUAGE_SETTING: 'aletorex_language_setting_v1',
 };
 
@@ -39,6 +40,8 @@ export const INITIAL_STATS: PlayerStats = {
   jokersUsed: 0,
   jokerWins: 0,
   highestSinglePotWon: 0,
+  highestSingleGain: 0,
+  highestBankBalance: DEFAULT_STARTING_POINTS,
   lastDailyRewardTimestamp: 0,
   freeReloadsClaimed: 0,
 };
@@ -147,8 +150,23 @@ export const saveStoredBotPoints = (pts: number): void => {
 export const getStoredStats = (): PlayerStats => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.STATS);
+    const currentPts = getStoredPlayerPoints();
     if (raw) {
-      return { ...INITIAL_STATS, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+      const computedPeak = Math.max(
+        currentPts,
+        parsed.highestBankBalance ?? DEFAULT_STARTING_POINTS
+      );
+      const computedGain = Math.max(
+        parsed.highestSingleGain ?? 0,
+        parsed.highestSinglePotWon ?? 0
+      );
+      return {
+        ...INITIAL_STATS,
+        ...parsed,
+        highestSingleGain: computedGain,
+        highestBankBalance: computedPeak,
+      };
     }
   } catch (err) {
     console.warn('Storage read error for stats', err);
@@ -349,6 +367,23 @@ export const saveStoredAutoPlayStrategy = (strategy: AutoPlayStrategy): void => 
     localStorage.setItem(STORAGE_KEYS.AUTOPLAY_STRATEGY, strategy);
   } catch (err) {
     console.warn('Storage write error for autoplay strategy', err);
+  }
+};
+
+export const getStoredZeroJokerMode = (): boolean => {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.ZERO_JOKER_MODE) === 'true';
+  } catch (err) {
+    console.warn('Storage read error for zero joker mode', err);
+  }
+  return false;
+};
+
+export const saveStoredZeroJokerMode = (enabled: boolean): void => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ZERO_JOKER_MODE, enabled ? 'true' : 'false');
+  } catch (err) {
+    console.warn('Storage write error for zero joker mode', err);
   }
 };
 

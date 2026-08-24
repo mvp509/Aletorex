@@ -15,6 +15,7 @@ import {
   Dices,
   Radio,
   Eye,
+  ZapOff,
 } from 'lucide-react';
 import { useGameEngine } from './hooks/useGameEngine';
 import { Header } from './components/Header';
@@ -75,6 +76,8 @@ function GameContent() {
     tieCount,
     botPersonality,
     gameSpeed,
+    isZeroJokerMode,
+    toggleZeroJokerMode,
     isChaoticMode,
     toggleChaoticMode,
     botChaoticBet,
@@ -229,12 +232,13 @@ function GameContent() {
               <span>{gameSpeed === 'FAST' ? t('speedFast') : t('speedNormal')}</span>
             </button>
 
-            {/* Adversary Profile Selector (Tacticien: 1J, Offensif: 2J, Stratège: 3J) */}
+            {/* Adversary Profile Selector (Tacticien: 1J/0J, Offensif: 2J, Stratège: 3J) */}
             <div className="flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-xl">
               {(['STANDARD', 'AGGRESSIVE', 'CAUTIOUS'] as BotPersonality[]).map((p) => {
                 const b = BOT_PROFILES[p];
                 const isSelected = botPersonality === p;
                 const profileName = p === 'STANDARD' ? t('botTactician') : p === 'AGGRESSIVE' ? t('botAggressive') : t('botCautious');
+                const displayedJokers = p === 'STANDARD' && isZeroJokerMode ? 0 : b.maxJokers;
                 return (
                   <button
                     key={p}
@@ -246,19 +250,65 @@ function GameContent() {
                         ? 'bg-purple-900/90 text-purple-200 border border-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.3)]'
                         : 'text-slate-400 hover:text-slate-200'
                     } ${stage !== 'BETTING' ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    title={`${profileName} (${b.maxJokers} Joker${b.maxJokers > 1 ? 's' : ''})`}
+                    title={`${profileName} (${displayedJokers} Joker${displayedJokers > 1 ? 's' : ''})`}
                   >
                     <span>{b.avatar}</span>
                     <span className="hidden sm:inline">{profileName}</span>
-                    <span className="text-[9px] px-1 py-0.2 rounded bg-purple-950/80 border border-purple-800/60 text-purple-300 font-mono font-black">
-                      {b.maxJokers}J
+                    <span className={`text-[9px] px-1 py-0.2 rounded font-mono font-black border ${
+                      p === 'STANDARD' && isZeroJokerMode
+                        ? 'bg-cyan-950/80 border-cyan-700/60 text-cyan-300'
+                        : 'bg-purple-950/80 border-purple-800/60 text-purple-300'
+                    }`}>
+                      {displayedJokers}J
                     </span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Switch Auto-Play / Spectateur (Mode Offensif) */}
+            {/* Switch Mode Zéro (Mode Tacticien - 0 Joker) */}
+            {botPersonality === 'STANDARD' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-xl transition-all ${
+                  isZeroJokerMode
+                    ? 'bg-gradient-to-r from-cyan-950/90 to-blue-950/80 border border-cyan-500/70 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
+                    : 'bg-slate-900/90 border border-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-1 text-[10px] font-bold text-cyan-200">
+                  <ZapOff className={`w-3.5 h-3.5 ${isZeroJokerMode ? 'text-cyan-400 animate-pulse' : 'text-slate-400'}`} />
+                  <span className="hidden xs:inline sm:inline">{t('zeroJokerModeTitle')}</span>
+                  {isZeroJokerMode && (
+                    <span className="text-[9px] px-1 py-0.2 rounded font-mono font-black bg-cyan-600 text-slate-950 shadow">
+                      0J
+                    </span>
+                  )}
+                </div>
+                {/* Switch Toggle Component */}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isZeroJokerMode}
+                  onClick={toggleZeroJokerMode}
+                  disabled={stage !== 'BETTING'}
+                  className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    isZeroJokerMode ? 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-[0_0_8px_#06b6d4]' : 'bg-slate-700'
+                  } ${stage !== 'BETTING' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title={t('zeroJokerModeTitle')}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      isZeroJokerMode ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </motion.div>
+            )}
+
+            {/* Switch Mode Aléatoire / Spectateur (Mode Offensif) */}
             {botPersonality === 'AGGRESSIVE' && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -271,7 +321,7 @@ function GameContent() {
               >
                 <div className="flex items-center gap-1 text-[10px] font-bold text-red-200">
                   <Radio className={`w-3.5 h-3.5 ${isAutoPlayActive ? 'text-red-400 animate-pulse' : 'text-slate-400'}`} />
-                  <span className="hidden xs:inline sm:inline">{t('spectator')}</span>
+                  <span className="hidden xs:inline sm:inline">{t('randomModeTitle')}</span>
                   {isAutoPlayActive && (
                     <span className="text-[9px] px-1 py-0.2 rounded font-mono font-black bg-red-600 text-white shadow">
                       {autoPlayStrategy === 'LEFT' ? t('spectatorLeft') : autoPlayStrategy === 'RIGHT' ? t('spectatorRight') : t('spectatorRandom')}
@@ -287,7 +337,7 @@ function GameContent() {
                   className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                     isAutoPlayActive ? 'bg-gradient-to-r from-red-500 to-amber-500 shadow-[0_0_8px_#ef4444]' : 'bg-slate-700'
                   }`}
-                  title="Auto-Play"
+                  title={t('randomModeTitle')}
                 >
                   <span
                     aria-hidden="true"
@@ -312,12 +362,12 @@ function GameContent() {
                   {isChaoticMode && (
                     <span
                       className={`text-[9px] px-1 py-0.2 rounded font-mono font-black ${
-                        chaoticDailyCount >= 10
+                        chaoticDailyCount >= 3
                           ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-slate-950'
                           : 'bg-purple-900/80 text-purple-300 border border-purple-700'
                       }`}
                     >
-                      {chaoticDailyCount >= 10 ? '🔥 -10k/10k' : `${chaoticDailyCount}/10`}
+                      {chaoticDailyCount >= 3 ? '-10k/+10k' : `${chaoticDailyCount}/3`}
                     </span>
                   )}
                 </div>
@@ -334,6 +384,7 @@ function GameContent() {
                   className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                     isChaoticMode ? 'bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_8px_#c084fc]' : 'bg-slate-700'
                   } ${stage !== 'BETTING' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title={t('chaoticModeTitle')}
                 >
                   <span
                     aria-hidden="true"
@@ -348,23 +399,27 @@ function GameContent() {
         </div>
 
         {/* Quota Evolution Notification Banner */}
-        {botPersonality === 'CAUTIOUS' && isChaoticMode && chaoticDailyCount >= 10 && !isChaoticAlertDismissed && (
+        {botPersonality === 'CAUTIOUS' && isChaoticMode && chaoticDailyCount >= 3 && !isChaoticAlertDismissed && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="w-full mb-2 p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-purple-950/95 via-pink-950/90 to-purple-950/95 border-2 border-purple-400/80 shadow-[0_0_20px_rgba(192,132,252,0.35)] flex items-center justify-between gap-3 text-xs backdrop-blur-md"
           >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-purple-500/25 border border-purple-400/60 flex items-center justify-center shrink-0 text-purple-300">
-                <Sparkles className="w-4 h-4 animate-spin" />
+            <div className="flex items-center gap-3">
+              {/* Dynamic Chaotic Evolution Logo Emblem */}
+              <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-600 to-amber-500 p-0.5 shadow-[0_0_15px_rgba(244,63,94,0.6)] shrink-0 flex items-center justify-center">
+                <div className="w-full h-full rounded-[14px] bg-slate-950/80 flex items-center justify-center relative overflow-hidden">
+                  <Flame className="w-5 h-5 text-amber-400 animate-pulse" />
+                  <Dices className="w-3.5 h-3.5 text-pink-300 absolute -bottom-0.5 -right-0.5 drop-shadow-[0_0_4px_#ec4899]" />
+                </div>
               </div>
               <div>
                 <div className="font-black text-pink-300 uppercase tracking-wider flex items-center gap-1.5 text-[11px] sm:text-xs">
-                  <span>⚡ Évolution Mode Chaotique : Quota de 10 parties atteint !</span>
+                  <span>{t('chaoticQuotaEvolutionTitle')}</span>
                 </div>
                 <div className="text-slate-200 mt-0.5 leading-snug text-[10px] sm:text-xs">
-                  La plage de mise adverse change : les mises ne vont plus de <strong>0 à 10k</strong>, mais de <strong className="text-amber-300">-10 000 à +10 000 points</strong> !
+                  {t('chaoticQuotaEvolutionDesc')}
                 </div>
               </div>
             </div>
@@ -405,6 +460,8 @@ function GameContent() {
                   ? 'border-2 border-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.35)]'
                   : botPersonality === 'AGGRESSIVE' && isAutoPlayActive
                   ? 'border-2 border-red-500/80 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+                  : botPersonality === 'STANDARD' && isZeroJokerMode
+                  ? 'border-2 border-cyan-500/80 shadow-[0_0_12px_rgba(6,182,212,0.35)]'
                   : 'border border-rose-500/30 shadow-md'
               }`}
             >
@@ -412,24 +469,32 @@ function GameContent() {
               <div className="text-left">
                 <div className="text-xs font-extrabold text-rose-300 leading-tight flex items-center gap-1.5">
                   <span>{currentBot.name}</span>
+                  {botPersonality === 'STANDARD' && isZeroJokerMode && (
+                    <span className="text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-cyan-500/30 text-cyan-200 border border-cyan-400/60 font-black flex items-center gap-0.5 shadow-[0_0_8px_rgba(6,182,212,0.3)]">
+                      <ZapOff className="w-2.5 h-2.5 text-cyan-300" />
+                      {t('zeroJokerModeTitle')}
+                    </span>
+                  )}
                   {botPersonality === 'CAUTIOUS' && isChaoticMode && (
                     <span className="text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/60 font-black flex items-center gap-0.5">
                       <Dices className="w-2.5 h-2.5 text-purple-300" />
-                      {chaoticDailyCount >= 10 ? 'Évolué (-10k/+10k)' : 'Chaotique'}
+                      {chaoticDailyCount >= 3 ? t('chaoticEvolvedTag') : t('chaoticStandardTag')}
                     </span>
                   )}
                   {botPersonality === 'AGGRESSIVE' && isAutoPlayActive && (
                     <span className="text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-red-600/40 text-red-200 border border-red-400/60 font-black flex items-center gap-0.5 shadow-[0_0_8px_#ef4444]">
                       <Radio className="w-2.5 h-2.5 text-red-300 animate-pulse" />
-                      Auto-Play
+                      {t('randomModeTitle')}
                     </span>
                   )}
                 </div>
                 <div className="text-[9px] text-slate-400">
-                  {botPersonality === 'CAUTIOUS' && isChaoticMode
-                    ? chaoticDailyCount >= 10
+                  {botPersonality === 'STANDARD' && isZeroJokerMode
+                    ? t('zeroJokerBadge')
+                    : botPersonality === 'CAUTIOUS' && isChaoticMode
+                    ? chaoticDailyCount >= 3
                       ? '(-10 000 .. +10 000 pts)'
-                      : `(0 .. 10 000 pts • ${chaoticDailyCount}/10)`
+                      : `(0 .. 10 000 pts • ${chaoticDailyCount}/3)`
                     : botPersonality === 'AGGRESSIVE' && isAutoPlayActive
                     ? `${t('spectator')} • ${
                         autoPlayStrategy === 'LEFT'
@@ -444,18 +509,24 @@ function GameContent() {
               <div className="flex items-center gap-1 ml-1 pl-2 border-l border-slate-800">
                 <span className="text-[9px] text-purple-300 font-bold">Jokers:</span>
                 <div className="flex gap-1">
-                  {Array.from({ length: maxJokers }).map((_, idx) => (
-                    <span
-                      key={`bot-joker-badge-${idx}`}
-                      className={`text-[9px] px-1.5 py-0.2 rounded font-black ${
-                        jokersUsedBot >= idx + 1
-                          ? 'bg-purple-600 text-white shadow-[0_0_8px_#c084fc]'
-                          : 'bg-slate-800 text-slate-600'
-                      }`}
-                    >
-                      {idx + 1}
+                  {maxJokers === 0 ? (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded font-black bg-cyan-950/80 border border-cyan-700/60 text-cyan-300">
+                      0 ({t('zeroModeTag')})
                     </span>
-                  ))}
+                  ) : (
+                    Array.from({ length: maxJokers }).map((_, idx) => (
+                      <span
+                        key={`bot-joker-badge-${idx}`}
+                        className={`text-[9px] px-1.5 py-0.2 rounded font-black ${
+                          jokersUsedBot >= idx + 1
+                            ? 'bg-purple-600 text-white shadow-[0_0_8px_#c084fc]'
+                            : 'bg-slate-800 text-slate-600'
+                        }`}
+                      >
+                        {idx + 1}
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -640,7 +711,7 @@ function GameContent() {
                 maxJokers={maxJokers}
                 isChaoticMode={isChaoticMode}
                 chaoticDailyCount={chaoticDailyCount}
-                isChaoticEvolved={botPersonality === 'CAUTIOUS' && isChaoticMode && chaoticDailyCount >= 10}
+                isChaoticEvolved={botPersonality === 'CAUTIOUS' && isChaoticMode && chaoticDailyCount >= 3}
               />
             )}
 

@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Coins, Sparkles, AlertCircle, Zap, Dices } from 'lucide-react';
+import { Coins, Sparkles, AlertCircle, Zap, Dices, ZapOff } from 'lucide-react';
 import { calculateJokerPrice, getMaxJokersForPersonality } from '../utils/botLogic';
 import { playSound } from '../utils/audio';
 import { BotPersonality } from '../types';
@@ -162,7 +162,12 @@ export const BetControls: React.FC<BetControlsProps> = ({
           <span>{t('chooseYourBet')}</span>
         </div>
 
-        {showJokerBadge && (
+        {freeJokersCount === 0 ? (
+          <div className="flex items-center gap-1 text-[11px] sm:text-xs px-2.5 py-1 rounded-full font-bold bg-cyan-950/70 text-cyan-300 border border-cyan-700/60 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+            <ZapOff className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span>{t('zeroJokerBadge')}</span>
+          </div>
+        ) : showJokerBadge && (
           <div
             className={`flex items-center gap-1 text-[11px] sm:text-xs px-2.5 py-1 rounded-full font-bold transition-all ${
               isMax
@@ -318,8 +323,8 @@ export const BetControls: React.FC<BetControlsProps> = ({
               <span>
                 {botPersonality === 'CAUTIOUS' && isChaoticMode
                   ? isChaoticEvolved
-                    ? `${selectedBet} Pts • Duel (-10k/10k) 🔥`
-                    : `${selectedBet} Pts • Chaos [${chaoticDailyCount + 1}/10] 🎲`
+                    ? `${selectedBet} Pts • Duel (-10k/+10k)`
+                    : `${selectedBet} Pts • Chaos [${Math.min(3, chaoticDailyCount + 1)}/3] 🎲`
                   : activeLanguage === 'en'
                   ? `Bet ${selectedBet} Points & Deal`
                   : activeLanguage === 'ht'

@@ -15,6 +15,10 @@ import {
   Shield,
   CheckCircle2,
   Lock,
+  Crown,
+  TrendingUp,
+  Sparkles,
+  Coins,
 } from 'lucide-react';
 import { PlayerStats, RoundSummary, Trophy } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -46,6 +50,18 @@ export const StatsModal: React.FC<StatsModalProps> = ({
     stats.totalRounds > 0 ? Math.round((stats.roundsWon / stats.totalRounds) * 100) : 0;
 
   const unlockedTrophiesCount = trophies.filter((t) => t.isUnlocked).length;
+
+  const peakBalance = Math.max(playerPoints, stats.highestBankBalance || 0);
+  const highestSingleWin = Math.max(stats.highestSingleGain || 0, stats.highestSinglePotWon || 0);
+
+  // Find max gain in history for badge highlighting
+  const maxHistoryGain = history.reduce((max, r) => {
+    if (r.winner !== 'PLAYER') return max;
+    const gain = r.isChaotic
+      ? (r.botBetAmount !== undefined ? r.botBetAmount : Math.max(0, r.potAmount - r.betAmount))
+      : r.betAmount;
+    return Math.max(max, gain);
+  }, 0);
 
   // Helper to compute dynamic progress for each trophy
   const getTrophyProgress = (trophyId: string) => {
@@ -151,6 +167,72 @@ export const StatsModal: React.FC<StatsModalProps> = ({
             {/* STATS TAB */}
             {activeTab === 'STATS' && (
               <div className="space-y-3">
+                {/* Prestige Historical Records Showcase */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* Historical Peak Balance Card */}
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-950/70 via-slate-950 to-yellow-950/40 border-2 border-amber-500/60 shadow-[0_0_20px_rgba(251,191,36,0.18)] relative overflow-hidden flex flex-col justify-between">
+                    <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300">
+                            <Crown className="w-4 h-4 text-amber-300" />
+                          </div>
+                          <span className="text-[11px] font-black uppercase tracking-wider text-amber-300">
+                            {t('highestBankBalanceRecord')}
+                          </span>
+                        </div>
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/50 text-[9px] font-black text-amber-300">
+                          {t('peakBalanceTag')}
+                        </span>
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-baseline gap-1.5 mt-1 font-mono">
+                        <span className="text-amber-300">{peakBalance.toLocaleString()}</span>
+                        <span className="text-xs text-amber-400 font-sans font-bold">pts</span>
+                      </div>
+                    </div>
+                    <div className="mt-2.5 pt-2 border-t border-amber-500/20 flex items-center justify-between text-[10px] text-slate-400">
+                      <span>{t('bankBalance')} : <strong className="text-emerald-400 font-mono">{playerPoints.toLocaleString()} pts</strong></span>
+                      <span className="text-amber-300 font-bold flex items-center gap-0.5">
+                        <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                        {peakBalance >= 1000 ? 'Légende' : peakBalance >= 500 ? 'Fortune' : 'Actif'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Historical Highest Single Win Gain Card */}
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-950/70 via-slate-950 to-teal-950/40 border-2 border-emerald-500/60 shadow-[0_0_20px_rgba(52,211,153,0.18)] relative overflow-hidden flex flex-col justify-between">
+                    <div className="absolute -top-3 -right-3 w-16 h-16 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-xl bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-300">
+                            <TrendingUp className="w-4 h-4 text-emerald-300" />
+                          </div>
+                          <span className="text-[11px] font-black uppercase tracking-wider text-emerald-300">
+                            {t('highestGainRecord')}
+                          </span>
+                        </div>
+                        <span className="px-1.5 py-0.5 rounded-full bg-emerald-400/20 border border-emerald-400/50 text-[9px] font-black text-emerald-300">
+                          {t('historicalRecordTag')}
+                        </span>
+                      </div>
+                      <div className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-baseline gap-1.5 mt-1 font-mono">
+                        <span className="text-emerald-400">+{highestSingleWin.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 font-sans font-bold">pts</span>
+                      </div>
+                    </div>
+                    <div className="mt-2.5 pt-2 border-t border-emerald-500/20 flex items-center justify-between text-[10px] text-slate-400">
+                      <span>{t('highestGainRecordDesc')}</span>
+                      <span className="text-emerald-300 font-bold flex items-center gap-0.5">
+                        <Coins className="w-2.5 h-2.5 text-emerald-400" />
+                        Max 1 Manche
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Core Stats Overview */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-center">
                     <div className="text-[10px] text-slate-400 uppercase font-bold">{t('totalRounds')}</div>
@@ -170,9 +252,10 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                   </div>
                 </div>
 
+                {/* Secondary Metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3">
-                    <Flame className="w-6 h-6 text-orange-400" />
+                    <Flame className="w-6 h-6 text-orange-400 shrink-0" />
                     <div>
                       <div className="text-[10px] text-slate-400 font-bold uppercase">{t('streakRecord')}</div>
                       <div className="text-base font-black text-orange-300">
@@ -182,17 +265,17 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                   </div>
 
                   <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3">
-                    <TrophyIcon className="w-6 h-6 text-yellow-400" />
+                    <TrophyIcon className="w-6 h-6 text-yellow-400 shrink-0" />
                     <div>
                       <div className="text-[10px] text-slate-400 font-bold uppercase">{t('highestPotWon')}</div>
-                      <div className="text-base font-black text-yellow-400">
-                        {stats.highestSinglePotWon} pts
+                      <div className="text-base font-black text-yellow-400 font-mono">
+                        {stats.highestSinglePotWon.toLocaleString()} pts
                       </div>
                     </div>
                   </div>
 
                   <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3">
-                    <Shield className="w-6 h-6 text-purple-400" />
+                    <Shield className="w-6 h-6 text-purple-400 shrink-0" />
                     <div>
                       <div className="text-[10px] text-slate-400 font-bold uppercase">{t('jokersUsedStats')}</div>
                       <div className="text-base font-black text-purple-300">
@@ -292,12 +375,18 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                       ? (round.botBetAmount !== undefined ? round.botBetAmount : Math.max(0, round.potAmount - round.betAmount))
                       : round.betAmount;
 
+                    const isRecordGain = round.winner === 'PLAYER' && netPlayerGain > 0 && netPlayerGain === maxHistoryGain && maxHistoryGain > 0;
+
                     return (
                       <div
                         key={`history-round-${round.timestamp || ''}-${round.roundNumber}-${idx}`}
                         className={`p-2.5 px-3.5 rounded-xl bg-slate-950 border ${
-                          isRoundChaotic ? 'border-purple-500/40 bg-purple-950/20' : 'border-slate-800'
-                        } flex items-center justify-between text-xs`}
+                          isRecordGain
+                            ? 'border-amber-500/80 bg-gradient-to-r from-amber-950/40 via-slate-950 to-slate-950 shadow-[0_0_15px_rgba(251,191,36,0.2)]'
+                            : isRoundChaotic
+                            ? 'border-purple-500/40 bg-purple-950/20'
+                            : 'border-slate-800'
+                        } flex items-center justify-between text-xs transition-all`}
                       >
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-mono text-[10px] text-slate-500">#{round.roundNumber}</span>
@@ -312,6 +401,12 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                           >
                             {round.winner === 'PLAYER' ? t('victory') : round.winner === 'BOT' ? t('defeat') : t('tie')}
                           </span>
+                          {isRecordGain && (
+                            <span className="bg-amber-400/20 text-amber-300 border border-amber-400/60 px-1.5 py-0.2 rounded text-[9px] font-black flex items-center gap-0.5">
+                              <Crown className="w-2.5 h-2.5 text-amber-400" />
+                              RECORD
+                            </span>
+                          )}
                           {isRoundChaotic && (
                             <span className="bg-purple-900/60 text-purple-300 border border-purple-500/50 px-1.5 py-0.2 rounded text-[9px] font-bold">
                               🎲 Chaotique ({round.botBetAmount ?? '?'} pts)
@@ -323,7 +418,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({
                         </div>
                         <div className="font-extrabold text-right ml-2 shrink-0">
                           <span className={round.winner === 'PLAYER' ? 'text-emerald-400 font-mono' : 'text-slate-400 font-mono'}>
-                            {round.winner === 'PLAYER' ? `+${netPlayerGain} pts` : `-${round.betAmount} pts`}
+                            {round.winner === 'PLAYER' ? `+${netPlayerGain.toLocaleString()} pts` : `-${round.betAmount.toLocaleString()} pts`}
                           </span>
                         </div>
                       </div>
@@ -349,3 +444,4 @@ export const StatsModal: React.FC<StatsModalProps> = ({
     </AnimatePresence>
   );
 };
+

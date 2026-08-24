@@ -63,7 +63,7 @@ export const InteractivePot: React.FC<InteractivePotProps> = ({
 
   const safeBet = Math.max(0, currentBet || 0);
   const isGameOver = stage === 'GAME_OVER';
-  const isEvolved = isChaotic && chaoticDailyCount >= 10;
+  const isEvolved = isChaotic && chaoticDailyCount >= 3;
 
   // In chaotic mode, opponent bet is secret until GAME_OVER
   const isChaoticRevealed = isChaotic && isGameOver && botChaoticBet !== null;
@@ -256,7 +256,7 @@ export const InteractivePot: React.FC<InteractivePotProps> = ({
                       ? t('chaoticRevealed')
                       : isEvolved
                       ? '-10k à +10k'
-                      : `${chaoticDailyCount}/10 (0-10k)`
+                      : `${chaoticDailyCount}/3 (0-10k)`
                     : '×2'}
                 </span>
               </div>
@@ -412,7 +412,7 @@ export const InteractivePot: React.FC<InteractivePotProps> = ({
                       {isChaotic
                         ? isEvolved
                           ? 'Mise adverse étendue (-10 000 à +10 000 pts)'
-                          : `Mise adverse secrète (${chaoticDailyCount}/10)`
+                          : `Mise adverse secrète (${chaoticDailyCount}/3)`
                         : t('calculatorSubtitle')}
                     </p>
                   </div>
@@ -493,7 +493,7 @@ export const InteractivePot: React.FC<InteractivePotProps> = ({
                       ? t('chaoticRevealed')
                       : isEvolved
                       ? 'Évolué (-10k à +10k)'
-                      : `${chaoticDailyCount}/10`
+                      : `${chaoticDailyCount}/3`
                     : '× 2'}
                 </div>
               </div>

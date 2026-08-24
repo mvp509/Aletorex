@@ -39,6 +39,8 @@ import {
   saveStoredAutoPlayEnabled,
   getStoredAutoPlayStrategy,
   saveStoredAutoPlayStrategy,
+  getStoredZeroJokerMode,
+  saveStoredZeroJokerMode,
   getStoredLanguageSetting,
   resetAllGameData,
   INITIAL_TROPHIES,
@@ -127,6 +129,7 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
   const [botChaoticBet, setBotChaoticBet] = useState<number | null>(null);
   const [chaoticDailyCount, setChaoticDailyCount] = useState<number>(() => getStoredChaoticDailyCount());
   const [isChaoticAlertDismissed, setIsChaoticAlertDismissed] = useState<boolean>(() => getStoredChaoticAlertDismissed());
+  const [isZeroJokerMode, setIsZeroJokerMode] = useState<boolean>(() => getStoredZeroJokerMode());
   const [isAutoPlayActive, setIsAutoPlayActive] = useState<boolean>(() => getStoredAutoPlayEnabled());
   const [autoPlayStrategy, setAutoPlayStrategy] = useState<AutoPlayStrategy>(() => getStoredAutoPlayStrategy());
 
@@ -140,6 +143,22 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
     [t]
   );
 
+  // Toggle Zero Joker Mode for Tactician
+  const toggleZeroJokerMode = useCallback(() => {
+    if (stage !== 'BETTING') return;
+    setIsZeroJokerMode((prev) => {
+      const next = !prev;
+      saveStoredZeroJokerMode(next);
+      playSound('click');
+      if (next) {
+        setStatusMessage(t('zeroJokerActivated'));
+      } else {
+        setStatusMessage(t('zeroJokerDeactivated'));
+      }
+      return next;
+    });
+  }, [stage, t]);
+
   // Update default status message on language change if in BETTING stage
   useEffect(() => {
     if (stage === 'BETTING') {
@@ -147,8 +166,11 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
     }
   }, [t, stage]);
 
-  // Maximum allowed Jokers based on adversary profile (Tacticien: 1, Offensif: 2, Stratège: 3)
-  const maxJokers = getMaxJokersForPersonality(botPersonality);
+  // Maximum allowed Jokers based on adversary profile (Tacticien: 1 or 0 if Zero Mode, Offensif: 2, Stratège: 3)
+  const maxJokers =
+    botPersonality === 'STANDARD' && isZeroJokerMode
+      ? 0
+      : getMaxJokersForPersonality(botPersonality);
 
   // Persistent Stats & Trophies
   const [stats, setStats] = useState<PlayerStats>(() => getStoredStats());
@@ -173,6 +195,7 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
     gameSpeed,
     botPersonality,
     maxJokers,
+    isZeroJokerMode,
     isChaoticMode,
     botChaoticBet,
     isAutoPlayActive,
@@ -196,6 +219,7 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
       gameSpeed,
       botPersonality,
       maxJokers,
+      isZeroJokerMode,
       isChaoticMode,
       botChaoticBet,
       isAutoPlayActive,
@@ -217,6 +241,7 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
     gameSpeed,
     botPersonality,
     maxJokers,
+    isZeroJokerMode,
     isChaoticMode,
     botChaoticBet,
     isAutoPlayActive,
@@ -426,6 +451,10 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
       saveStoredBotPoints(newBotPts);
 
       // Update Stats
+      const roundNetGain = finalWinner === 'PLAYER'
+        ? (isChaoticActive ? actualBotBet : currentBetAmt)
+        : 0;
+
       const updatedStats: PlayerStats = {
         ...curStats,
         totalRounds: curStats.totalRounds + 1,
@@ -441,8 +470,17 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
         jokerWins: curStats.jokerWins + (isJokerWin ? 1 : 0),
         highestSinglePotWon:
           finalWinner === 'PLAYER'
-            ? Math.max(curStats.highestSinglePotWon, actualPotTotal)
-            : curStats.highestSinglePotWon,
+            ? Math.max(curStats.highestSinglePotWon || 0, actualPotTotal)
+            : (curStats.highestSinglePotWon || 0),
+        highestSingleGain:
+          finalWinner === 'PLAYER'
+            ? Math.max(curStats.highestSingleGain || 0, roundNetGain, actualPotTotal)
+            : (curStats.highestSingleGain || 0),
+        highestBankBalance: Math.max(
+          curStats.highestBankBalance || 0,
+          curPlayerPts,
+          newPlayerPts
+        ),
       };
 
       setStats(updatedStats);
@@ -487,14 +525,14 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
       const isMax = betAmount >= playerPoints;
       const isChaoticActive = botPersonality === 'CAUTIOUS' && isChaoticMode;
 
-      // Roll chaotic secret bot bet: 0 to 10 000 (standard, <= 10 games) or -10 000 to +10 000 (evolved, > 10 games)
+      // Roll chaotic secret bot bet: 0 to 10 000 (standard, <= 3 games) or -10 000 to +10 000 (evolved, > 3 games)
       let generatedBotBet: number | null = null;
       let nextDailyCount = chaoticDailyCount;
       let isEvolved = false;
 
       if (isChaoticActive) {
         const currentDaily = getStoredChaoticDailyCount();
-        isEvolved = currentDaily >= 10;
+        isEvolved = currentDaily >= 3;
         if (isEvolved) {
           // Evolved range: -10 000 to +10 000
           generatedBotBet = Math.floor(Math.random() * 20001) - 10000;
@@ -539,7 +577,7 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
         isChaoticActive
           ? isEvolved
             ? t('statusChaoticDealing', { range: '-10 000 .. +10 000' })
-            : t('statusChaoticDealing', { range: `0 .. 10 000 (${nextDailyCount}/10)` })
+            : t('statusChaoticDealing', { range: `0 .. 10 000 (${nextDailyCount}/3)` })
           : t('statusDealing')
       );
 
@@ -1106,6 +1144,9 @@ export const useGameEngine = (options?: UseGameEngineOptions) => {
     tieCount,
     botPersonality,
     gameSpeed,
+    isZeroJokerMode,
+    setIsZeroJokerMode,
+    toggleZeroJokerMode,
     isChaoticMode,
     setIsChaoticMode,
     toggleChaoticMode,
