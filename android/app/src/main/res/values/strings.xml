@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ALETOREX</string>
+    <string name="title_activity_main">ALETOREX</string>
+    <string name="package_name">com.aletorex.app</string>
+    <string name="custom_url_scheme">com.aletorex.app</string>
+</resources>
