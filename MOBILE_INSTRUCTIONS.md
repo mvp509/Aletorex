@@ -32,6 +32,13 @@ cd android && ./gradlew assembleDebug
 
 ---
 
-## 📦 Emplacement de l'APK généré :
-`android/app/build/outputs/apk/debug/app-debug.apk` ou `android/app/build/outputs/apk/release/app-release.apk`
+## 🔒 Permissions d'exécution (chmod +x) pour CI/CD & Appflow
+Un script `postinstall` dans `package.json` applique automatiquement `chmod +x` sur `./gradlew` et `./android/gradlew` lors de chaque étape d'installation sur Appflow.
+
+Si vous commitez depuis Windows ou une machine où les bits d'exécution ne sont pas conservés par Git, vous pouvez également forcer le flag exécutable dans l'index Git avec :
+```bash
+git update-index --chmod=+x gradlew android/gradlew
+git commit -m "chore: ensure executable permissions on gradlew"
+git push
+```
 

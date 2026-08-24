@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
+    "postinstall": "chmod +x ./gradlew ./android/gradlew 2>/dev/null || true",
     "cap:build": "vite build && npx cap sync",
     "cap:sync": "npx cap sync",
     "cap:android": "vite build && npx cap sync android && npx cap open android",
